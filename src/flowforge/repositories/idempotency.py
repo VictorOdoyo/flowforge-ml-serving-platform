@@ -23,6 +23,9 @@ class IdempotencyRepository:
         await self.session.flush()
         return record
 
+    async def commit(self) -> None:
+        await self.session.commit()
+
     async def delete_expired(self) -> int:
         result = await self.session.execute(
             delete(IdempotencyRecord).where(
@@ -30,4 +33,3 @@ class IdempotencyRepository:
             )
         )
         return int(result.rowcount or 0)  # type: ignore[attr-defined]
-

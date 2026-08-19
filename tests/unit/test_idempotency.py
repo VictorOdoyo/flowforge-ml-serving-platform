@@ -80,3 +80,4 @@ async def test_reserve_persists_request_fingerprint() -> None:
     assert record.resource_id == resource_id
     assert record.response_status == 202
     repository_mock.add.assert_awaited_once_with(record)
+    repository_mock.commit.assert_awaited_once()

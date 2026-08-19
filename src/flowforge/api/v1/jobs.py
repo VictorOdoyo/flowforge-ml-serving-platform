@@ -4,7 +4,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from flowforge.api.dependencies import get_current_user, get_job_service, require_operator
+from flowforge.api.dependencies import (
+    get_current_user,
+    get_idempotency_service,
+    get_job_service,
+    require_operator,
+)
 from flowforge.core.exceptions import AuthorizationError
 from flowforge.db.session import get_session
 from flowforge.models.enums import JobStatus, JobType, UserRole
@@ -18,6 +23,7 @@ from flowforge.schemas.job import JobCancelResponse, JobCreate, JobRead
 from flowforge.schemas.output import JobOutputRead
 from flowforge.schemas.stage import StageRead
 from flowforge.services.job import JobService
+from flowforge.services.idempotency import IdempotencyService
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -31,12 +37,33 @@ def ensure_job_access(job: JobRead, user: User) -> None:
 async def submit_job(
     data: JobCreate,
     service: Annotated[JobService, Depends(get_job_service)],
+    idempotency: Annotated[IdempotencyService, Depends(get_idempotency_service)],
     user: Annotated[User, Depends(require_operator)],
-    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+    idempotency_key: Annotated[
+        str | None,
+        Header(alias="Idempotency-Key", min_length=8, max_length=255),
+    ] = None,
 ) -> JobRead:
-    # The key is accepted at the HTTP boundary now and persisted by the idempotency service later.
-    _ = idempotency_key
-    return JobRead.model_validate(await service.submit(user.id, data))
+    payload = data.model_dump(mode="json")
+    scope = f"jobs:{user.id}"
+    if idempotency_key:
+        existing_id = await idempotency.check(
+            scope=scope,
+            key=idempotency_key,
+            payload=payload,
+        )
+        if existing_id is not None:
+            return JobRead.model_validate(await service.get(existing_id))
+
+    job = await service.submit(user.id, data)
+    if idempotency_key:
+        await idempotency.reserve(
+            scope=scope,
+            key=idempotency_key,
+            payload=payload,
+            resource_id=job.id,
+        )
+    return JobRead.model_validate(job)
 
 
 @router.get("", response_model=Page[JobRead])
@@ -118,4 +145,3 @@ async def list_job_events(
     ensure_job_access(job, user)
     rows = await AuditRepository(session).list_for_job(job_id)
     return [AuditEventRead.model_validate(row) for row in rows]
-

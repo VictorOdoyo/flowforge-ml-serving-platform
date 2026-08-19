@@ -5,7 +5,12 @@ from uuid import UUID, uuid4
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from flowforge.api.dependencies import get_current_user, get_job_service, require_operator
+from flowforge.api.dependencies import (
+    get_current_user,
+    get_idempotency_service,
+    get_job_service,
+    require_operator,
+)
 from flowforge.main import create_app
 from flowforge.models.enums import JobStatus, JobType, UserRole
 from flowforge.models.job import Job
@@ -70,11 +75,33 @@ class StubJobService:
         )
 
 
+class StubIdempotencyService:
+    async def check(
+        self,
+        *,
+        scope: str,
+        key: str,
+        payload: dict[str, object],
+    ) -> UUID | None:
+        return None
+
+    async def reserve(
+        self,
+        *,
+        scope: str,
+        key: str,
+        payload: dict[str, object],
+        resource_id: UUID,
+    ) -> None:
+        return None
+
+
 def jobs_app(user: User, service: StubJobService) -> FastAPI:
     app = create_app()
     app.dependency_overrides[get_current_user] = lambda: user
     app.dependency_overrides[require_operator] = lambda: user
     app.dependency_overrides[get_job_service] = lambda: service
+    app.dependency_overrides[get_idempotency_service] = StubIdempotencyService
     return app
 
 

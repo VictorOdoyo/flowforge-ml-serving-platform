@@ -46,5 +46,6 @@ class IdempotencyService:
             response_status=202,
             expires_at=datetime.now(UTC) + timedelta(hours=ttl_hours),
         )
-        return await self.records.add(record)
-
+        await self.records.add(record)
+        await self.records.commit()
+        return record
