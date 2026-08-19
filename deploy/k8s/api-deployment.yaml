@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowforge-api
+  namespace: flowforge
+  labels:
+    app.kubernetes.io/name: flowforge-api
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flowforge-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flowforge-api
+        app.kubernetes.io/component: api
+    spec:
+      serviceAccountName: flowforge
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: api
+          image: ghcr.io/victorodoyo/flowforge-ml-serving-platform:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: flowforge-config
+          env:
+            - name: FLOWFORGE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: flowforge-secrets
+                  key: database-url
+            - name: FLOWFORGE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: flowforge-secrets
+                  key: jwt-secret
+          readinessProbe:
+            httpGet:
+              path: /api/v1/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 750m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: flowforge-api
