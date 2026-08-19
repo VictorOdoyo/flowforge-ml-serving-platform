@@ -1,5 +1,13 @@
 name: flowforge
 
+x-flowforge-environment: &flowforge-environment
+  FLOWFORGE_ENVIRONMENT: local
+  FLOWFORGE_DATABASE_URL: postgresql+asyncpg://flowforge:flowforge-local@postgres:5432/flowforge
+  FLOWFORGE_REDIS_URL: redis://redis:6379/0
+  FLOWFORGE_CELERY_BROKER_URL: redis://redis:6379/1
+  FLOWFORGE_CELERY_RESULT_BACKEND: redis://redis:6379/2
+  FLOWFORGE_JWT_SECRET: local-compose-secret-change-before-deployment
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -30,6 +38,29 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+    command: ["/app/.venv/bin/alembic", "upgrade", "head"]
+    environment: *flowforge-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+    environment: *flowforge-environment
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
