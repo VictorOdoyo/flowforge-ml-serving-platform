@@ -1,13 +1,19 @@
 from collections.abc import AsyncIterator
+import hashlib
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from flowforge.core.config import Settings, get_settings
-from flowforge.core.exceptions import AuthenticationError, AuthorizationError
-from flowforge.core.redis import redis_client
+from flowforge.core.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    RateLimitExceededError,
+)
+from flowforge.core.redis import get_redis, redis_client
 from flowforge.core.security import decode_access_token
 from flowforge.db.session import engine, get_session
 from flowforge.models.enums import UserRole
@@ -20,6 +26,7 @@ from flowforge.services.auth import AuthenticationService
 from flowforge.services.idempotency import IdempotencyService
 from flowforge.services.job import JobService
 from flowforge.services.readiness import ReadinessService
+from flowforge.services.rate_limit import FixedWindowRateLimiter
 from flowforge.tasks.dispatcher import CeleryJobDispatcher
 
 bearer = HTTPBearer(auto_error=False)
@@ -78,3 +85,25 @@ async def get_idempotency_service(
 
 def get_readiness_service() -> ReadinessService:
     return ReadinessService(engine, redis_client)
+
+
+async def enforce_rate_limit(
+    request: Request,
+    response: Response,
+    redis: Annotated[Redis, Depends(get_redis)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> None:
+    authorization = request.headers.get("Authorization")
+    remote = request.client.host if request.client else "unknown"
+    identity_source = authorization or remote
+    identity = hashlib.sha256(identity_source.encode()).hexdigest()[:24]
+    limiter = FixedWindowRateLimiter(redis, limit=settings.rate_limit_per_minute)
+    allowed, remaining = await limiter.allow(identity)
+    response.headers["X-RateLimit-Limit"] = str(settings.rate_limit_per_minute)
+    response.headers["X-RateLimit-Remaining"] = str(remaining)
+    if not allowed:
+        raise RateLimitExceededError(
+            "Request rate limit exceeded",
+            context={"retry_after_seconds": 60},
+            headers={"Retry-After": "60"},
+        )

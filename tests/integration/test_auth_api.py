@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from flowforge.api.dependencies import get_authentication_service
+from flowforge.api.dependencies import enforce_rate_limit, get_authentication_service
 from flowforge.main import create_app
 from flowforge.schemas.auth import LoginRequest, TokenResponse
 
@@ -15,6 +15,7 @@ class StubAuthenticationService:
 def authenticated_app() -> FastAPI:
     app = create_app()
     app.dependency_overrides[get_authentication_service] = StubAuthenticationService
+    app.dependency_overrides[enforce_rate_limit] = lambda: None
     return app
 
 

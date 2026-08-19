@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from flowforge.api.dependencies import (
+    enforce_rate_limit,
     get_current_user,
     get_idempotency_service,
     get_job_service,
@@ -112,6 +113,7 @@ def jobs_app(
     app.dependency_overrides[get_idempotency_service] = lambda: (
         idempotency or StubIdempotencyService()
     )
+    app.dependency_overrides[enforce_rate_limit] = lambda: None
     return app
 
 

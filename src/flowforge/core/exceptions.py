@@ -5,10 +5,17 @@ class DomainError(Exception):
     code = "domain_error"
     status_code = 400
 
-    def __init__(self, message: str, *, context: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        context: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.context = context or {}
+        self.headers = headers or {}
 
 
 class ResourceNotFoundError(DomainError):
@@ -34,3 +41,7 @@ class AuthorizationError(DomainError):
 class InvalidTransitionError(ConflictError):
     code = "invalid_state_transition"
 
+
+class RateLimitExceededError(DomainError):
+    code = "rate_limit_exceeded"
+    status_code = 429

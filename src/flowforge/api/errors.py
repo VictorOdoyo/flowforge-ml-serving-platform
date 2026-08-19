@@ -25,4 +25,5 @@ async def domain_error_handler(request: Request, error: DomainError) -> ORJSONRe
             }
         },
         status_code=error.status_code,
+        headers=error.headers,
     )

@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from flowforge.api.dependencies import require_admin, require_operator
+from flowforge.api.dependencies import enforce_rate_limit, require_admin, require_operator
 from flowforge.db.session import get_session
 from flowforge.models.enums import ModelStatus
 from flowforge.models.user import User
@@ -16,7 +16,11 @@ from flowforge.schemas.model_version import (
 )
 from flowforge.services.model_registry import ModelRegistryService
 
-router = APIRouter(prefix="/models", tags=["model registry"])
+router = APIRouter(
+    prefix="/models",
+    tags=["model registry"],
+    dependencies=[Depends(enforce_rate_limit)],
+)
 
 
 @router.post("", response_model=ModelVersionRead, status_code=status.HTTP_201_CREATED)
@@ -50,4 +54,3 @@ async def update_model_status(
     service = ModelRegistryService(ModelVersionRepository(session))
     updated = await service.change_status(model_id, ModelStatus(data.status))
     return ModelVersionRead.model_validate(updated)
-

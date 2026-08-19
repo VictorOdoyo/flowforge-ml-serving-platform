@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from flowforge.api.dependencies import (
     get_current_user,
+    enforce_rate_limit,
     get_idempotency_service,
     get_job_service,
     require_operator,
@@ -25,7 +26,11 @@ from flowforge.schemas.stage import StageRead
 from flowforge.services.job import JobService
 from flowforge.services.idempotency import IdempotencyService
 
-router = APIRouter(prefix="/jobs", tags=["jobs"])
+router = APIRouter(
+    prefix="/jobs",
+    tags=["jobs"],
+    dependencies=[Depends(enforce_rate_limit)],
+)
 
 
 def ensure_job_access(job: JobRead, user: User) -> None:
