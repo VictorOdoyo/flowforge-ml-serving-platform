@@ -17,6 +17,9 @@ class ModelRegistryService:
         await self.models.commit()
         return model
 
+    async def list(self, *, limit: int, offset: int) -> list[ModelVersion]:
+        return await self.models.list(limit=limit, offset=offset)
+
     async def change_status(self, model_id: UUID, target: ModelStatus) -> ModelVersion:
         model = await self.models.get(model_id)
         if model is None:
@@ -28,4 +31,3 @@ class ModelRegistryService:
         model.status = target
         await self.models.commit()
         return model
-

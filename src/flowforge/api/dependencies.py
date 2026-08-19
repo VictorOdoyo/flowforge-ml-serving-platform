@@ -21,10 +21,12 @@ from flowforge.models.user import User
 from flowforge.repositories.audit import AuditRepository
 from flowforge.repositories.idempotency import IdempotencyRepository
 from flowforge.repositories.job import JobRepository
+from flowforge.repositories.model_version import ModelVersionRepository
 from flowforge.repositories.user import UserRepository
 from flowforge.services.auth import AuthenticationService
 from flowforge.services.idempotency import IdempotencyService
 from flowforge.services.job import JobService
+from flowforge.services.model_registry import ModelRegistryService
 from flowforge.services.rate_limit import FixedWindowRateLimiter
 from flowforge.services.readiness import ReadinessService
 from flowforge.tasks.dispatcher import CeleryJobDispatcher
@@ -85,6 +87,12 @@ async def get_idempotency_service(
 
 def get_readiness_service() -> ReadinessService:
     return ReadinessService(engine, redis_client)
+
+
+async def get_model_registry_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> AsyncIterator[ModelRegistryService]:
+    yield ModelRegistryService(ModelVersionRepository(session))
 
 
 async def enforce_rate_limit(
