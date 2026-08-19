@@ -49,7 +49,7 @@ def test_access_token_rejects_wrong_secret(settings: Settings) -> None:
         settings=settings,
     )
     other_settings = settings.model_copy(
-        update={"jwt_secret": SecretStr("a-different-signing-secret")}
+        update={"jwt_secret": SecretStr("a-different-signing-secret-over-32-bytes")}
     )
 
     with pytest.raises(AuthenticationError, match="invalid or expired"):

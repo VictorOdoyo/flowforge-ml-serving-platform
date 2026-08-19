@@ -19,7 +19,7 @@ def settings() -> Settings:
         environment="test",
         database_url="postgresql+asyncpg://test:test@localhost:5432/test",
         redis_url="redis://localhost:6379/15",
-        jwt_secret=SecretStr("test-secret-that-is-long-enough-for-hs256"),
+        jwt_secret=SecretStr("test-secret-that-is-more-than-32-bytes-for-hs256"),
         access_token_minutes=15,
     )
 

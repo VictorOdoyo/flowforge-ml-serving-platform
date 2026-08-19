@@ -5,7 +5,6 @@ import structlog
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
 
 from flowforge.api.errors import domain_error_handler
 from flowforge.api.metrics import router as metrics_router
@@ -38,7 +37,6 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version="0.1.0",
         description="Versioned APIs for durable workflows and model-serving jobs.",
-        default_response_class=ORJSONResponse,
         lifespan=lifespan,
         docs_url="/docs" if settings.environment != "production" else None,
         redoc_url="/redoc" if settings.environment != "production" else None,

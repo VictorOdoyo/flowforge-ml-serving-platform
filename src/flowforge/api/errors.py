@@ -1,13 +1,13 @@
 import structlog
 from fastapi import Request
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 
 from flowforge.core.exceptions import DomainError
 
 logger = structlog.get_logger()
 
 
-async def domain_error_handler(request: Request, error: DomainError) -> ORJSONResponse:
+async def domain_error_handler(request: Request, error: DomainError) -> JSONResponse:
     request_id = getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID")
     await logger.awarning(
         "domain_error",
@@ -15,7 +15,7 @@ async def domain_error_handler(request: Request, error: DomainError) -> ORJSONRe
         status_code=error.status_code,
         path=request.url.path,
     )
-    return ORJSONResponse(
+    return JSONResponse(
         {
             "error": {
                 "code": error.code,
