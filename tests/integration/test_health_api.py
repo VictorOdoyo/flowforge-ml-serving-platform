@@ -1,6 +1,22 @@
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from flowforge.api.dependencies import get_readiness_service
 from flowforge.main import create_app
+
+
+class StubReadinessService:
+    def __init__(self, checks: dict[str, bool]) -> None:
+        self.result = checks
+
+    async def checks(self) -> dict[str, bool]:
+        return self.result
+
+
+def readiness_app(checks: dict[str, bool]) -> FastAPI:
+    app = create_app()
+    app.dependency_overrides[get_readiness_service] = lambda: StubReadinessService(checks)
+    return app
 
 
 def test_health_endpoint_exposes_service_identity() -> None:
@@ -18,11 +34,21 @@ def test_health_endpoint_exposes_service_identity() -> None:
 
 
 def test_readiness_endpoint_reports_api_check() -> None:
-    with TestClient(create_app()) as client:
+    checks = {"api": True, "database": True, "redis": True}
+    with TestClient(readiness_app(checks)) as client:
         response = client.get("/api/v1/ready")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ready", "checks": {"api": True}}
+    assert response.json() == {"status": "ready", "checks": checks}
+
+
+def test_readiness_endpoint_fails_when_dependency_is_down() -> None:
+    checks = {"api": True, "database": True, "redis": False}
+    with TestClient(readiness_app(checks)) as client:
+        response = client.get("/api/v1/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {"status": "not_ready", "checks": checks}
 
 
 def test_metrics_endpoint_uses_prometheus_format() -> None:
