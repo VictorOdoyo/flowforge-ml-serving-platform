@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import cast
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,7 @@ class IdempotencyRepository:
             IdempotencyRecord.key == key,
             IdempotencyRecord.expires_at > datetime.now(UTC),
         )
-        return await self.session.scalar(statement)
+        return cast(IdempotencyRecord | None, await self.session.scalar(statement))
 
     async def add(self, record: IdempotencyRecord) -> IdempotencyRecord:
         self.session.add(record)

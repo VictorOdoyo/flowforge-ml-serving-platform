@@ -57,7 +57,6 @@ async def execute_job_async(job_id: UUID) -> None:
     retry_backoff_max=300,
     retry_jitter=True,
     max_retries=3,
-)
+)  # type: ignore[untyped-decorator]
 def execute_job(_: Task, job_id: str) -> None:
     asyncio.run(execute_job_async(UUID(job_id)))
-

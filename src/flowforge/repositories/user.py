@@ -1,3 +1,4 @@
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import select
@@ -15,10 +16,9 @@ class UserRepository:
 
     async def get_by_email(self, email: str) -> User | None:
         statement = select(User).where(User.email == email.lower())
-        return await self.session.scalar(statement)
+        return cast(User | None, await self.session.scalar(statement))
 
     async def add(self, user: User) -> User:
         self.session.add(user)
         await self.session.flush()
         return user
-

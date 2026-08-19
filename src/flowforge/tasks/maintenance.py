@@ -12,7 +12,6 @@ async def cleanup_idempotency_async() -> int:
         return deleted
 
 
-@celery_app.task(name="flowforge.cleanup_idempotency")
+@celery_app.task(name="flowforge.cleanup_idempotency")  # type: ignore[untyped-decorator]
 def cleanup_idempotency() -> int:
     return asyncio.run(cleanup_idempotency_async())
-
