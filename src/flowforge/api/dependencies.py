@@ -1,0 +1,59 @@
+from collections.abc import AsyncIterator
+from typing import Annotated
+
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from flowforge.core.config import Settings, get_settings
+from flowforge.core.exceptions import AuthenticationError, AuthorizationError
+from flowforge.core.security import decode_access_token
+from flowforge.db.session import get_session
+from flowforge.models.enums import UserRole
+from flowforge.models.user import User
+from flowforge.repositories.audit import AuditRepository
+from flowforge.repositories.job import JobRepository
+from flowforge.repositories.user import UserRepository
+from flowforge.services.job import JobService
+from flowforge.tasks.dispatcher import CeleryJobDispatcher
+
+bearer = HTTPBearer(auto_error=False)
+
+
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> User:
+    if credentials is None:
+        raise AuthenticationError("Bearer token is required")
+    claims = decode_access_token(credentials.credentials, settings)
+    user = await UserRepository(session).get_by_id(claims["sub"])
+    if user is None or not user.is_active:
+        raise AuthenticationError("Token subject is not an active user")
+    return user
+
+
+async def require_operator(
+    user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    if user.role not in {UserRole.ADMIN, UserRole.OPERATOR}:
+        raise AuthorizationError("Operator access is required")
+    return user
+
+
+async def require_admin(user: Annotated[User, Depends(get_current_user)]) -> User:
+    if user.role != UserRole.ADMIN:
+        raise AuthorizationError("Administrator access is required")
+    return user
+
+
+async def get_job_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> AsyncIterator[JobService]:
+    yield JobService(
+        jobs=JobRepository(session),
+        audits=AuditRepository(session),
+        dispatcher=CeleryJobDispatcher(),
+    )
+
