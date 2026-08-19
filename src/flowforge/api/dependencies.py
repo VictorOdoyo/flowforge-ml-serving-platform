@@ -14,6 +14,7 @@ from flowforge.models.user import User
 from flowforge.repositories.audit import AuditRepository
 from flowforge.repositories.job import JobRepository
 from flowforge.repositories.user import UserRepository
+from flowforge.services.auth import AuthenticationService
 from flowforge.services.job import JobService
 from flowforge.tasks.dispatcher import CeleryJobDispatcher
 
@@ -57,3 +58,9 @@ async def get_job_service(
         dispatcher=CeleryJobDispatcher(),
     )
 
+
+async def get_authentication_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> AsyncIterator[AuthenticationService]:
+    yield AuthenticationService(UserRepository(session), settings)
