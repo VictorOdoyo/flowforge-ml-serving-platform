@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowforge-worker
+  namespace: flowforge
+  labels:
+    app.kubernetes.io/name: flowforge-worker
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flowforge-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flowforge-worker
+        app.kubernetes.io/component: worker
+    spec:
+      serviceAccountName: flowforge
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: ghcr.io/victorodoyo/flowforge-ml-serving-platform:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /app/.venv/bin/celery
+            - -A
+            - flowforge.tasks.celery_app:celery_app
+            - worker
+            - --loglevel=INFO
+            - --queues=workflows,maintenance
+            - --concurrency=2
+          envFrom:
+            - configMapRef:
+                name: flowforge-config
+          env:
+            - name: FLOWFORGE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: flowforge-secrets
+                  key: database-url
+            - name: FLOWFORGE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: flowforge-secrets
+                  key: jwt-secret
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
