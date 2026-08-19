@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, Header, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from flowforge.api.dependencies import (
-    get_current_user,
     enforce_rate_limit,
+    get_current_user,
     get_idempotency_service,
     get_job_service,
     require_operator,
@@ -23,8 +23,8 @@ from flowforge.schemas.common import Page
 from flowforge.schemas.job import JobCancelResponse, JobCreate, JobRead
 from flowforge.schemas.output import JobOutputRead
 from flowforge.schemas.stage import StageRead
-from flowforge.services.job import JobService
 from flowforge.services.idempotency import IdempotencyService
+from flowforge.services.job import JobService
 
 router = APIRouter(
     prefix="/jobs",

@@ -1,8 +1,8 @@
 import asyncio
 
+from flowforge.db.session import session_factory
 from flowforge.repositories.idempotency import IdempotencyRepository
 from flowforge.tasks.celery_app import celery_app
-from flowforge.db.session import session_factory
 
 
 async def cleanup_idempotency_async() -> int:

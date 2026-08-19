@@ -5,12 +5,12 @@ from uuid import UUID
 from celery import Task
 from sqlalchemy import select
 
+from flowforge.db.session import session_factory
 from flowforge.models.enums import JobStatus, OutputKind
 from flowforge.models.job import Job
 from flowforge.models.output import JobOutput
 from flowforge.tasks.celery_app import celery_app
 from flowforge.tasks.pipelines import PIPELINES
-from flowforge.db.session import session_factory
 
 
 async def execute_job_async(job_id: UUID) -> None:

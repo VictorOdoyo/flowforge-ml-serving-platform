@@ -18,10 +18,14 @@ class RequestSizeLimitMiddleware:
                     content_length = self.max_bytes + 1
                 if content_length > self.max_bytes:
                     response = JSONResponse(
-                        {"error": {"code": "request_too_large", "message": "Request body is too large"}},
+                        {
+                            "error": {
+                                "code": "request_too_large",
+                                "message": "Request body is too large",
+                            }
+                        },
                         status_code=413,
                     )
                     await response(scope, receive, send)
                     return
         await self.app(scope, receive, send)
-

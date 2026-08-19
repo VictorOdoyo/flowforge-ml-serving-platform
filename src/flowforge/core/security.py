@@ -22,13 +22,9 @@ def hash_password(password: str) -> str:
     digest = hashlib.scrypt(
         password.encode(), salt=salt, n=SCRYPT_N, r=SCRYPT_R, p=SCRYPT_P, dklen=64
     )
-    return "scrypt${}${}${}${}${}".format(
-        SCRYPT_N,
-        SCRYPT_R,
-        SCRYPT_P,
-        base64.urlsafe_b64encode(salt).decode(),
-        base64.urlsafe_b64encode(digest).decode(),
-    )
+    encoded_salt = base64.urlsafe_b64encode(salt).decode()
+    encoded_digest = base64.urlsafe_b64encode(digest).decode()
+    return f"scrypt${SCRYPT_N}${SCRYPT_R}${SCRYPT_P}${encoded_salt}${encoded_digest}"
 
 
 def verify_password(password: str, encoded: str) -> bool:
@@ -76,4 +72,3 @@ def decode_access_token(token: str, settings: Settings) -> dict[str, Any]:
         )
     except jwt.PyJWTError as error:
         raise AuthenticationError("Access token is invalid or expired") from error
-

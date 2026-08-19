@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Index, JSON, String
+from sqlalchemy import JSON, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from flowforge.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin

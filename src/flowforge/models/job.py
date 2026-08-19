@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, JSON, String
+from sqlalchemy import JSON, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from flowforge.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin

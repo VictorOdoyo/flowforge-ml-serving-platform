@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     environment: Literal["local", "test", "staging", "production"] = "local"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
+    api_host: str = "0.0.0.0"  # noqa: S104 - container bind address is configurable.
+    api_port: int = 8000
     log_level: str = "INFO"
 
     database_url: str = "postgresql+asyncpg://flowforge:flowforge@localhost:5432/flowforge"
@@ -37,4 +39,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

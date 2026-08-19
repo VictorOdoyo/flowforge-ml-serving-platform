@@ -32,7 +32,7 @@ def user_factory() -> Callable[..., User]:
         email: str = "operator@example.com",
         role: UserRole = UserRole.OPERATOR,
         is_active: bool = True,
-        hashed_password: str = "unused-in-most-tests",
+        hashed_password: str | None = None,
     ) -> User:
         now = datetime.now(UTC)
         user = User(
@@ -40,7 +40,7 @@ def user_factory() -> Callable[..., User]:
             full_name="Test Operator",
             role=role,
             is_active=is_active,
-            hashed_password=hashed_password,
+            hashed_password=hashed_password or "",
         )
         user.id = user_id
         user.created_at = now

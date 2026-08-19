@@ -7,9 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
-from flowforge.api.v1.router import api_router
 from flowforge.api.errors import domain_error_handler
 from flowforge.api.metrics import router as metrics_router
+from flowforge.api.v1.router import api_router
 from flowforge.core.config import get_settings
 from flowforge.core.exceptions import DomainError
 from flowforge.core.logging import configure_logging
@@ -63,4 +63,9 @@ app = create_app()
 
 
 def run() -> None:
-    uvicorn.run("flowforge.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
+    uvicorn.run(
+        "flowforge.main:app",
+        host=settings.api_host,
+        port=settings.api_port,
+        reload=settings.debug,
+    )
