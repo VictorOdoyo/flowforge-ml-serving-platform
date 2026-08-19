@@ -7,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from flowforge.core.config import Settings, get_settings
 from flowforge.core.exceptions import AuthenticationError, AuthorizationError
+from flowforge.core.redis import redis_client
 from flowforge.core.security import decode_access_token
-from flowforge.db.session import get_session
+from flowforge.db.session import engine, get_session
 from flowforge.models.enums import UserRole
 from flowforge.models.user import User
 from flowforge.repositories.audit import AuditRepository
@@ -18,6 +19,7 @@ from flowforge.repositories.user import UserRepository
 from flowforge.services.auth import AuthenticationService
 from flowforge.services.idempotency import IdempotencyService
 from flowforge.services.job import JobService
+from flowforge.services.readiness import ReadinessService
 from flowforge.tasks.dispatcher import CeleryJobDispatcher
 
 bearer = HTTPBearer(auto_error=False)
@@ -72,3 +74,7 @@ async def get_idempotency_service(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> AsyncIterator[IdempotencyService]:
     yield IdempotencyService(IdempotencyRepository(session))
+
+
+def get_readiness_service() -> ReadinessService:
+    return ReadinessService(engine, redis_client)
