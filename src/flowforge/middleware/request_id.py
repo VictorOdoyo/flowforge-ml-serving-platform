@@ -15,6 +15,7 @@ class RequestIDMiddleware:
             return
         headers = {key.lower(): value for key, value in scope.get("headers", [])}
         request_id = headers.get(b"x-request-id", b"").decode() or str(uuid4())
+        scope.setdefault("state", {})["request_id"] = request_id
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(request_id=request_id)
 
@@ -25,4 +26,3 @@ class RequestIDMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_with_request_id)
-

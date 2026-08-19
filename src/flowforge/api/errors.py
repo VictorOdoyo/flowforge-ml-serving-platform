@@ -8,7 +8,7 @@ logger = structlog.get_logger()
 
 
 async def domain_error_handler(request: Request, error: DomainError) -> ORJSONResponse:
-    request_id = request.headers.get("X-Request-ID")
+    request_id = getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID")
     await logger.awarning(
         "domain_error",
         code=error.code,
@@ -26,4 +26,3 @@ async def domain_error_handler(request: Request, error: DomainError) -> ORJSONRe
         },
         status_code=error.status_code,
     )
-
