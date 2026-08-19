@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowforge-scheduler
+  namespace: flowforge
+  labels:
+    app.kubernetes.io/name: flowforge-scheduler
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flowforge-scheduler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flowforge-scheduler
+        app.kubernetes.io/component: scheduler
+    spec:
+      serviceAccountName: flowforge
+      containers:
+        - name: scheduler
+          image: ghcr.io/victorodoyo/flowforge-ml-serving-platform:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /app/.venv/bin/celery
+            - -A
+            - flowforge.tasks.celery_app:celery_app
+            - beat
+            - --loglevel=INFO
+            - --schedule=/tmp/celerybeat-schedule
+          envFrom:
+            - configMapRef:
+                name: flowforge-config
+          env:
+            - name: FLOWFORGE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: flowforge-secrets
+                  key: database-url
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+            - name: schedule
+              mountPath: /tmp
+      volumes:
+        - name: schedule
+          emptyDir: {}
