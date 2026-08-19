@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flowforge-config
+  namespace: flowforge
+data:
+  FLOWFORGE_ENVIRONMENT: production
+  FLOWFORGE_API_HOST: 0.0.0.0
+  FLOWFORGE_API_PORT: "8000"
+  FLOWFORGE_LOG_LEVEL: INFO
+  FLOWFORGE_REDIS_URL: redis://redis:6379/0
+  FLOWFORGE_CELERY_BROKER_URL: redis://redis:6379/1
+  FLOWFORGE_CELERY_RESULT_BACKEND: redis://redis:6379/2
+  FLOWFORGE_MAX_REQUEST_BYTES: "10485760"
+  FLOWFORGE_RATE_LIMIT_PER_MINUTE: "120"
+  FLOWFORGE_CORS_ORIGINS: '[]'
