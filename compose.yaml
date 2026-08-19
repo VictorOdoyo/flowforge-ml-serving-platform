@@ -63,6 +63,42 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  worker:
+    build:
+      context: .
+    command:
+      - /app/.venv/bin/celery
+      - -A
+      - flowforge.tasks.celery_app:celery_app
+      - worker
+      - --loglevel=INFO
+      - --queues=workflows,maintenance
+      - --concurrency=2
+    environment: *flowforge-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: .
+    command:
+      - /app/.venv/bin/celery
+      - -A
+      - flowforge.tasks.celery_app:celery_app
+      - beat
+      - --loglevel=INFO
+    environment: *flowforge-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   redis-data:
