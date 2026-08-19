@@ -76,6 +76,10 @@ class StubJobService:
 
 
 class StubIdempotencyService:
+    def __init__(self, existing_id: UUID | None = None) -> None:
+        self.existing_id = existing_id
+        self.reservations: list[UUID] = []
+
     async def check(
         self,
         *,
@@ -83,7 +87,7 @@ class StubIdempotencyService:
         key: str,
         payload: dict[str, object],
     ) -> UUID | None:
-        return None
+        return self.existing_id
 
     async def reserve(
         self,
@@ -93,15 +97,21 @@ class StubIdempotencyService:
         payload: dict[str, object],
         resource_id: UUID,
     ) -> None:
-        return None
+        self.reservations.append(resource_id)
 
 
-def jobs_app(user: User, service: StubJobService) -> FastAPI:
+def jobs_app(
+    user: User,
+    service: StubJobService,
+    idempotency: StubIdempotencyService | None = None,
+) -> FastAPI:
     app = create_app()
     app.dependency_overrides[get_current_user] = lambda: user
     app.dependency_overrides[require_operator] = lambda: user
     app.dependency_overrides[get_job_service] = lambda: service
-    app.dependency_overrides[get_idempotency_service] = StubIdempotencyService
+    app.dependency_overrides[get_idempotency_service] = lambda: (
+        idempotency or StubIdempotencyService()
+    )
     return app
 
 
@@ -154,3 +164,43 @@ def test_prevents_operator_from_reading_another_users_job(
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "permission_denied"
+
+
+def test_replays_job_for_matching_idempotency_key(
+    user_factory: Callable[..., User],
+) -> None:
+    user = user_factory()
+    service = StubJobService(make_job(user.id))
+    idempotency = StubIdempotencyService(existing_id=service.job.id)
+
+    with TestClient(jobs_app(user, service, idempotency)) as client:
+        response = client.post(
+            "/api/v1/jobs",
+            json={
+                "name": "Daily churn scoring",
+                "job_type": "model_inference",
+                "payload": {"records": [{"account_id": "A-1"}]},
+                "priority": 70,
+            },
+            headers={"Idempotency-Key": "daily-churn-2026-08-19"},
+        )
+
+    assert response.status_code == 202
+    assert response.json()["id"] == str(service.job.id)
+    assert idempotency.reservations == []
+
+
+def test_rejects_unsafe_short_idempotency_key(
+    user_factory: Callable[..., User],
+) -> None:
+    user = user_factory()
+    service = StubJobService(make_job(user.id))
+
+    with TestClient(jobs_app(user, service)) as client:
+        response = client.post(
+            "/api/v1/jobs",
+            json={"name": "Daily churn scoring", "job_type": "model_inference"},
+            headers={"Idempotency-Key": "short"},
+        )
+
+    assert response.status_code == 422
