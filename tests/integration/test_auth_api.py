@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from flowforge.api.dependencies import enforce_rate_limit, get_authentication_service
+from flowforge.core.exceptions import RateLimitExceededError
 from flowforge.main import create_app
 from flowforge.schemas.auth import LoginRequest, TokenResponse
 
@@ -48,3 +49,28 @@ def test_token_endpoint_validates_credentials_shape() -> None:
     fields = {tuple(error["loc"]) for error in response.json()["detail"]}
     assert ("body", "email") in fields
     assert ("body", "password") in fields
+
+
+def test_rate_limited_request_includes_retry_contract() -> None:
+    app = authenticated_app()
+
+    async def reject_request() -> None:
+        raise RateLimitExceededError(
+            "Request rate limit exceeded",
+            context={"retry_after_seconds": 60},
+            headers={"Retry-After": "60"},
+        )
+
+    app.dependency_overrides[enforce_rate_limit] = reject_request
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/auth/token",
+            json={
+                "email": "operator@example.com",
+                "password": "valid-password",
+            },
+        )
+
+    assert response.status_code == 429
+    assert response.headers["Retry-After"] == "60"
+    assert response.json()["error"]["code"] == "rate_limit_exceeded"
