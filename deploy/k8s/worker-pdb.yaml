@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: flowforge-worker
+  namespace: flowforge
+  labels:
+    app.kubernetes.io/name: flowforge-worker
+    app.kubernetes.io/component: worker
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flowforge-worker
