@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from flowforge.models.enums import JobType
+from flowforge.services.bounded_runner import run_bounded
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,9 +24,16 @@ class DataPreparationPipeline:
 class ModelInferencePipeline:
     async def run(self, payload: dict[str, Any]) -> PipelineResult:
         records = payload.get("records", [])
-        return PipelineResult(
-            payload={"predictions": [0.5 for _ in records], "model_latency_ms": 12}
+        predictions = await run_bounded(
+            records,
+            self._score_record,
+            concurrency=4,
+            timeout_seconds=5,
         )
+        return PipelineResult(payload={"predictions": predictions, "model_latency_ms": 12})
+
+    async def _score_record(self, _: Any) -> float:
+        return 0.5
 
 
 class ReportGenerationPipeline:
