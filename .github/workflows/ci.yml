@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run Ruff
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Run mypy
+        run: uv run mypy
+
+      - name: Run tests with coverage
+        run: uv run pytest --cov=flowforge --cov-report=term-missing
+
+      - name: Validate Alembic migration SQL
+        run: uv run alembic upgrade head --sql > /tmp/flowforge-migration.sql
+
+      - name: Validate Docker Compose file
+        run: docker compose config --quiet
+
+      - name: Validate Kubernetes manifests
+        run: kubectl kustomize deploy/k8s > /tmp/flowforge-k8s.yaml
