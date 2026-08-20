@@ -12,6 +12,15 @@ from flowforge.models.output import JobOutput
 from flowforge.tasks.celery_app import celery_app
 from flowforge.tasks.pipelines import PIPELINES
 
+MAX_JOB_ATTEMPTS = 4
+RETRYABLE_ERRORS = (OSError, TimeoutError)
+
+
+def classify_failure(error: Exception, attempt_count: int) -> JobStatus:
+    retryable = isinstance(error, RETRYABLE_ERRORS)
+    has_attempts_remaining = attempt_count < MAX_JOB_ATTEMPTS
+    return JobStatus.RETRYING if retryable and has_attempts_remaining else JobStatus.FAILED
+
 
 async def execute_job_async(job_id: UUID) -> None:
     async with session_factory() as session:
@@ -27,9 +36,11 @@ async def execute_job_async(job_id: UUID) -> None:
         try:
             result = await PIPELINES[job.job_type].run(job.payload)
         except Exception as error:
-            job.status = JobStatus.RETRYING
+            job.status = classify_failure(error, job.attempt_count)
             job.error_code = type(error).__name__
             job.error_message = str(error)[:1000]
+            if job.status == JobStatus.FAILED:
+                job.finished_at = datetime.now(UTC)
             await session.commit()
             raise
 
