@@ -29,8 +29,6 @@ class IdempotencyRepository:
 
     async def delete_expired(self) -> int:
         result = await self.session.execute(
-            delete(IdempotencyRecord).where(
-                IdempotencyRecord.expires_at <= datetime.now(UTC)
-            )
+            delete(IdempotencyRecord).where(IdempotencyRecord.expires_at <= datetime.now(UTC))
         )
         return int(result.rowcount or 0)  # type: ignore[attr-defined]

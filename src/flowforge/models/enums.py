@@ -42,4 +42,3 @@ class OutputKind(StrEnum):
     FILE = "file"
     REPORT = "report"
     PREDICTION = "prediction"
-

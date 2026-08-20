@@ -29,4 +29,3 @@ class ModelVersionRead(BaseModel):
 
 class ModelStatusUpdate(BaseModel):
     status: ModelStatus
-

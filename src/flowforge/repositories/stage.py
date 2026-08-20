@@ -21,4 +21,3 @@ class StageRepository:
     async def add_many(self, stages: list[ProcessingStage]) -> None:
         self.session.add_all(stages)
         await self.session.flush()
-

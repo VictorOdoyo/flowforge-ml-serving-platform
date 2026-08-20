@@ -20,4 +20,3 @@ class OutputRepository:
         self.session.add(output)
         await self.session.flush()
         return output
-

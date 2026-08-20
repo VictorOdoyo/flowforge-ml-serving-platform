@@ -25,4 +25,3 @@ class AuditEvent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     source_ip: Mapped[str | None] = mapped_column(String(64))
     request_id: Mapped[str | None] = mapped_column(String(100), index=True)
-

@@ -23,9 +23,7 @@ async def test_model_inference_returns_one_prediction_per_record() -> None:
 
 @pytest.mark.asyncio
 async def test_report_generation_uses_supplied_title() -> None:
-    result = await PIPELINES[JobType.REPORT_GENERATION].run(
-        {"title": "Weekly model health"}
-    )
+    result = await PIPELINES[JobType.REPORT_GENERATION].run({"title": "Weekly model health"})
 
     assert result.payload == {"title": "Weekly model health", "sections": 1}
 

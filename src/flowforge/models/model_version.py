@@ -24,4 +24,3 @@ class ModelVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     model_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
-

@@ -16,4 +16,3 @@ class JobOutputRead(BaseModel):
     payload: dict[str, Any] | None
     checksum: str | None
     content_type: str
-

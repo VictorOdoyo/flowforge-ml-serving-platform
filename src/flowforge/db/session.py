@@ -29,4 +29,3 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 async def dispose_engine() -> None:
     await engine.dispose()
-

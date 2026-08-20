@@ -24,4 +24,3 @@ class ModelVersionRepository:
 
     async def commit(self) -> None:
         await self.session.commit()
-

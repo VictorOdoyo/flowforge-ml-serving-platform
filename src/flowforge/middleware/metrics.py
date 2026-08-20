@@ -40,4 +40,3 @@ class MetricsMiddleware:
             method = scope.get("method", "unknown")
             HTTP_REQUESTS.labels(method=method, route=route_path, status=str(status_code)).inc()
             HTTP_DURATION.labels(method=method, route=route_path).observe(perf_counter() - started)
-

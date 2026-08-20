@@ -18,4 +18,3 @@ class FixedWindowRateLimiter:
             count, _ = await pipeline.execute()
         remaining = max(self.limit - int(count), 0)
         return int(count) <= self.limit, remaining
-

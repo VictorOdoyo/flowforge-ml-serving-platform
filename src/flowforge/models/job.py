@@ -45,4 +45,3 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     queued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-

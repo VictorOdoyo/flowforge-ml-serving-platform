@@ -20,4 +20,3 @@ class IdempotencyRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     resource_id: Mapped[UUID | None]
     response_status: Mapped[int | None] = mapped_column(Integer)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-

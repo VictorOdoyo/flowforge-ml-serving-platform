@@ -20,4 +20,3 @@ class AuthenticationService:
             user_id=user.id, role=user.role, settings=self.settings
         )
         return TokenResponse(access_token=token, expires_in=expires_in)
-

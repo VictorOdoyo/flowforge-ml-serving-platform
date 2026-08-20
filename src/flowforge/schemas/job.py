@@ -62,4 +62,3 @@ class JobCancelResponse(BaseModel):
     id: UUID
     status: JobStatus
     cancelled: bool
-

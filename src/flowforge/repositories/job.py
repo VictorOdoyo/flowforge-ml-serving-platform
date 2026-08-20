@@ -83,4 +83,3 @@ class JobRepository:
         if job_type is not None:
             statement = statement.where(Job.job_type == job_type)
         return statement
-

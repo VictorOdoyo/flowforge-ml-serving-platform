@@ -29,4 +29,3 @@ class ProcessingStage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-

@@ -46,4 +46,3 @@ PIPELINES: dict[JobType, Pipeline] = {
     JobType.REPORT_GENERATION: ReportGenerationPipeline(),
     JobType.FILE_PROCESSING: FileProcessingPipeline(),
 }
-

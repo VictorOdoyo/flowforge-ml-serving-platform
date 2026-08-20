@@ -18,4 +18,3 @@ class StageRead(BaseModel):
     detail: dict[str, Any]
     started_at: datetime | None
     finished_at: datetime | None
-

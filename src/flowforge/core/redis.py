@@ -14,4 +14,3 @@ async def get_redis() -> AsyncIterator[Redis]:
 
 async def close_redis() -> None:
     await redis_client.aclose()
-

@@ -45,4 +45,3 @@ class AuditRepository:
             .limit(limit)
         )
         return list((await self.session.scalars(statement)).all())
-

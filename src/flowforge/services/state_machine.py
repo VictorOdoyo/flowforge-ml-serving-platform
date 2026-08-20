@@ -21,4 +21,3 @@ def ensure_job_transition(current: JobStatus, target: JobStatus) -> None:
             f"Cannot transition job from {current.value} to {target.value}",
             context={"current": current.value, "target": target.value},
         )
-

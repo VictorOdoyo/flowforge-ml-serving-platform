@@ -18,4 +18,3 @@ class AuditEventRead(BaseModel):
     source_ip: str | None
     request_id: str | None
     created_at: datetime
-

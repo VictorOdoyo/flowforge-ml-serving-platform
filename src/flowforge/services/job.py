@@ -89,4 +89,3 @@ class JobService:
         )
         await self.jobs.commit()
         return job
-

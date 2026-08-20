@@ -10,4 +10,3 @@ class DispatchReceipt:
 
 class JobDispatcher(Protocol):
     def enqueue(self, job_id: UUID) -> DispatchReceipt: ...
-
