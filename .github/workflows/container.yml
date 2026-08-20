@@ -33,7 +33,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/victorodoyo/flowforge-ml-serving-platform:latest
+            ghcr.io/victorodoyo/flowforge-ml-serving-platform:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
